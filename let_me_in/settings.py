@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '0js4*ay%ms=40e=@26+7%w86%ijb3q+td)b@df+c77qtc9-$de'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -122,3 +122,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
 STATIC_URL = '/static/'
+
+RECAPTCHA_KEY = os.environ["RECAPTCHA_KEY"]
+RECAPTCHA_SECRET = os.environ["RECAPTCHA_SECRET"]
+RECAPTCHA_URL = "https://www.google.com/recaptcha/api/siteverify"

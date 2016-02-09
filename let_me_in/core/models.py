@@ -1,4 +1,7 @@
-from django.db.models import Model, ForeignKey, CharField, FloatField
+from uuid import uuid4
+
+from django.db.models import Model, ForeignKey, CharField, FloatField, \
+    UUIDField
 
 
 NESTED_PROFIT_PERCENTAGE = 25
@@ -8,10 +11,11 @@ class User(Model):
     """
     A custom user so that we can add permissions easily
     """
+    email = CharField(max_length=255, unique=True)
+    name = CharField(max_length=255, null=True, blank=True)
+    uuid = UUIDField(default=uuid4, editable=False, db_index=True, unique=True)
     referrer = ForeignKey(
         'self', null=True, blank=True, related_name="referees")
-    name = CharField(max_length=255, null=True, blank=True)
-    email = CharField(max_length=255, unique=True)
     score = FloatField(default=0.0)
 
     def referee_count(self, percent=100):
