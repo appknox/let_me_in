@@ -1,6 +1,6 @@
-# import requests
+import requests
 
-# from django.conf import settings
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -35,6 +35,17 @@ def register(request):
         if not referrer:
             return JsonResponse({
                 'message': 'Invalid referrer id!'}, status=400)
+
+    # Verify with google for spam
+    data = dict(respose=response, secret=settings.RECAPTCHA_SECRET)
+    reply = requests.post(settings.RECAPTCHA_URL, data=data).json()
+    if not reply['success']:
+        return JsonResponse({
+            'message': 'Stop spamming!' % str(user.uuid),
+            'error-codes': reply.get("error-codes"),
+        }, status=400)
+
+    # Everything is alright, create user!
     user = create_user(email=email, name=name, referrer=referrer)
     return JsonResponse({
         'message': 'Registration successful: %s' % str(user.uuid),
