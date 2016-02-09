@@ -1,4 +1,5 @@
 import requests
+from validate_email import validate_email
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -13,41 +14,46 @@ def register(request):
     """
     Register an Email
     """
-    secret = request.POST.get("secret")
+    if request.method != 'POST':
+        return JsonResponse({
+            'message': 'Only POST is allowed'}, status=405)
     response = request.POST.get("response")
     email = request.POST.get("email", "").strip()
     uuid = request.POST.get("uuid")
-    name = request.POST.get("name")
-    referrer = None
-    if not (secret and response):
+    name = request.POST.get("name", "").strip()
+    if not response:
         return JsonResponse({
-            'message': 'Both secret and respose data is required!'},
+            'message': 'Respose from reCAPTCHA service is required!'},
             status=400)
     if not email:
         return JsonResponse({
             'message': 'Email is required!'}, status=400)
+    if not validate_email(email):
+        return JsonResponse({
+            'message': 'Please enter a valid email address!'}, status=400)
     user = get_user_by_email(email)
     if user:
         return JsonResponse({
             'message': 'Email already registered!'}, status=400)
-    if uuid:
-        referrer = get_user_by_uuid(uuid)
-        if not referrer:
-            return JsonResponse({
-                'message': 'Invalid referrer id!'}, status=400)
+    referrer = get_user_by_uuid(uuid)
+    # Uncomment block below for strict-referrel verification
+    """
+    if uuid and not referrer:
+        return JsonResponse({'message': 'Invalid referrer id!'}, status=400)
+    """
 
     # Verify with google for spam
     data = dict(respose=response, secret=settings.RECAPTCHA_SECRET)
     reply = requests.post(settings.RECAPTCHA_URL, data=data).json()
     if not reply['success']:
         return JsonResponse({
-            'message': 'Stop spamming!' % str(user.uuid),
+            'message': 'reCAPTCHA verification failed!',
             'error-codes': reply.get("error-codes"),
         }, status=400)
 
     # Everything is alright, create user!
     user = create_user(email=email, name=name, referrer=referrer)
     return JsonResponse({
-        'message': 'Registration successful: %s' % str(user.uuid),
+        'message': 'Registration successful!',
         'uuid': str(user.uuid),
     })
